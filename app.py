@@ -1,49 +1,55 @@
-from random import randint, random
+from time import time
 from functools import reduce
+from random import randint, random, choice
 
 from blist import blist
 
 from ape import Population
 
 
-if __name__ == '__main__':
-    POP_SIZE = 1000
-    CHRM_LENGTH = 1000
-    MUTATION_RATE = 0.25
-    MAX_EVALS = 1000000
+POP_SIZE = 1000
+CHRM_LENGTH = 1000
+MUTATION_RATE = 0.25
+GENE_SET = range(10)
+MAX_EVALS = 1000000
 
-    class Chromosome(blist):
-        mutation_rate = MUTATION_RATE
-        length = CHRM_LENGTH
-        rand_gene = lambda: randint(0, 9)
-        rand_index = lambda: randint(0, CHRM_LENGTH - 1)
-        fitness = None
 
-        @classmethod
-        def rand(cls):
-            new = cls([cls.rand_gene() for n in range(cls.length)])
-            new._set_fitness()
-            return new
+class Chromosome:
+    mutation_rate = MUTATION_RATE
+    length = CHRM_LENGTH
+    gene_set = GENE_SET
 
-        def mate(self, dad):
-            # crossover
-            cls = self.__class__
-            i = cls.rand_index()
-            new = cls(self[0:i] + dad[i:cls.length])
-            # mutate
-            if random() < cls.mutation_rate:
-                i = cls.rand_index()
-                new[i] = cls.rand_gene()
-            # set_fitness
-            new._set_fitness()
-            return new
+    def __init__(self, *args, **kwargs):
+        self.genome = blist(args[0])
+        self.fitness = 9 * self.length - reduce(lambda x, y: x + y, self.genome)
 
-        def _set_fitness(self):
-            # select for 9's
-            self.fitness = 9 * self.length - reduce(lambda x, y: x + y, self)
+    @classmethod
+    def mate(cls, mom, dad):
+        # crossover
+        i = randint(0, cls.length - 1)
+        new = blist(mom.genome[0:i] + dad.genome[i:cls.length])
+        # mutate
+        if random() < cls.mutation_rate:
+            i = randint(0, cls.length - 1)
+            new[i] = choice(cls.gene_set)
+        return cls(new)
 
+    @classmethod
+    def rand(cls):
+        return cls([choice(cls.gene_set) for n in range(cls.length)])
+
+    def __str__(self):
+        return f'{self.fitness=} {str(self.genome)}'
+
+
+def test_evolve():
     pop = Population(Chromosome, POP_SIZE)
-    evals = pop.evolve(terminate=lambda x, y: y[0].fitness <= 10 or x > MAX_EVALS)
+    #pop.sync_evolve(terminate=lambda evals, pop: pop[0].fitness <= 0 or evals > MAX_EVALS)
+    pop.evolve(terminate=lambda x, y: y[0].fitness <= 0 or x > MAX_EVALS)
     first = pop[0]
     fitness = first.fitness
-    print(first, fitness, evals)
+    assert True
+
+
+if __name__ == '__main__':
+    test_evolve()
