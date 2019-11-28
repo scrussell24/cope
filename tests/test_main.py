@@ -2,7 +2,7 @@ from ape import Population
 from ape.genomes import list_genome
 
 
-def test_evolve():
+def test_sync_evolve():
     genome = list_genome(
         length=10,
         genes=range(10),
