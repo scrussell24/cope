@@ -1,10 +1,10 @@
 from functools import reduce
 
 from ape import Population
-from ape.genomes import ListGenome
+from ape.genomes import BListGenome
 
 
-class MyListGenome(ListGenome):
+class MyListGenome(BListGenome):
     length = 1000
     genes = range(10)
     mutation_rate = 0.25

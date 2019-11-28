@@ -11,7 +11,7 @@ class ListGenome:
     mutation_rate = None
 
     def __init__(self, *args, **kwargs):
-        self.gene_list = blist(args[0])
+        self.gene_list = args[0]
         self.fitness = self.calc_fitness()
 
     def calc_fitness(self):
@@ -34,3 +34,13 @@ class ListGenome:
 
     def __str__(self):
         return f'{self.fitness=} {str(self.gene_list)}'
+
+
+class BListGenome(ListGenome):
+
+    def __init__(self, *args, **kwargs):
+        self.gene_list = blist(args[0])
+        self.fitness = self.calc_fitness()
+
+
+# class TreeGenome: pass
