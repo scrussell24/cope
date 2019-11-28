@@ -21,7 +21,7 @@ class ListGenome:
     def mate(cls, mom, dad):
         # crossover
         i = randint(0, cls.length - 1)
-        new = blist(mom.gene_list[0:i] + dad.gene_list[i:cls.length])
+        new = mom.gene_list[0:i] + dad.gene_list[i:cls.length]
         # mutate
         if random() < cls.mutation_rate:
             i = randint(0, cls.length - 1)
