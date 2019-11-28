@@ -5,16 +5,17 @@ from random import randint, random, choice
 from blist import blist
 
 
-class _ListGenome:
+class ListGenome:
     # These must be set
     # see list_genome factory function
     length = None
     genes = None
+    fitness_fn = None
     mutation_rate = None
 
     def __init__(self, *args, **kwargs):
         self.gene_list = blist(args[0])
-        self.fitness = 9 * self.length - reduce(lambda x, y: x + y, self.gene_list)
+        self.fitness = self.fitness_fn()
 
     @classmethod
     def mate(cls, mom, dad):
@@ -35,8 +36,9 @@ class _ListGenome:
         return f'{self.fitness=} {str(self.gene_list)}'
 
 
-def list_genome(length, genes, mutation_rate):
-    _ListGenome.genes = genes
-    _ListGenome.length = length
-    _ListGenome.mutation_rate = mutation_rate
-    return _ListGenome
+def list_genome(length, genes, fitness, mutation_rate):
+    ListGenome.genes = genes
+    ListGenome.length = length
+    ListGenome.fitness_fn = fitness
+    ListGenome.mutation_rate = mutation_rate
+    return ListGenome
