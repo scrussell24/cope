@@ -1,7 +1,5 @@
 from functools import reduce
 
-from functools import reduce
-
 from ape import Population
 from ape.genomes import ListGenome
 
