@@ -15,11 +15,10 @@ class MyListGenome(BListGenome):
 
 def test_evolve():
     pop = Population(MyListGenome, 1000)
-    #pop.sync_evolve(terminate=lambda evals, pop: pop[0].fitness <= 0 or evals > 1000000)
-    pop.evolve(terminate=lambda x, y: y[0].fitness <= 0 or x > 1000000)
+    #pop = pop.sync_evolve(terminate=lambda evals, pop: pop[0].fitness <= 0 or evals > 1000000)
+    pop = pop.evolve(terminate=lambda x, y: y[0].fitness <= 0 or x > 1000000)
     first = pop[0]
-    #print(first)
-
+    print(first.fitness)
 
 if __name__ == '__main__':
     test_evolve()
