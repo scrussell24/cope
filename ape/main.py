@@ -1,6 +1,6 @@
 from time import time
 from random import random
-from math import sqrt, pow, floor, log
+from math import sqrt, pow, floor, log, ceil
 from multiprocessing import Queue, Pool, Process, Pipe, cpu_count
 
 from blist import sortedlist
@@ -12,14 +12,16 @@ def sorter(x):
 
 def evaluator(chrm, waiting, nursery):
     while True:
-        item = waiting.get(True)
-        mom = item[0]
-        dad = item[1]
-        child = chrm.mate(mom, dad)
-        nursery.put(child)
+        couples = waiting.get(True)
+        kids = []
+        for couple in couples:
+            mom = couple[0]
+            dad = couple[1]
+            kids.append(chrm.mate(mom, dad))
+        nursery.put(kids)
 
 
-def manager(pop, terminate, waiting, nursery, pipe_to):
+def manager(pop, terminate, waiting, nursery, pipe_to, batch_size):
     start_time = time()
     evals = 0
     while not terminate(evals, pop):
@@ -32,14 +34,19 @@ def manager(pop, terminate, waiting, nursery, pipe_to):
             print(f'{nursery.qsize()=}')
             print(f'{pop[0].fitness=}')
         if not waiting.full() and not nursery.full():
-            mom = pop[pop.rand_index()]
-            dad = pop[pop.rand_index()]
-            waiting.put((mom, dad))
+            # try some batching
+            couples = []
+            for n in range(batch_size):
+                mom = pop[pop.rand_index()]
+                dad = pop[pop.rand_index()]
+                couples.append((mom, dad))
+            waiting.put(couples)
         if not nursery.empty():
-            child = nursery.get(False)
-            pop.pop(len(pop) - pop.rand_index() - 1)
-            pop.add(child)
-            evals += 1
+            kids = nursery.get(False)
+            for child in kids:
+                pop.pop(len(pop) - pop.rand_index() - 1)
+                pop.add(child)
+            evals += batch_size
     print(f'Done {evals=}, {pop[0].fitness=}')
     pipe_to.send(pop)
 
@@ -53,14 +60,18 @@ class Population(sortedlist):
             key=sorter
         )
 
-    def evolve(self, terminate, num_workers=cpu_count()):
+    def evolve(self, terminate, num_workers=cpu_count(), batch_size=None):
+        if not batch_size:
+            batch_size = ceil(log(len(self)) / 2.0)
+            # batch_size = ceil(len(self)**(1/3.0))
+            print(f'{batch_size=}')
         start_time = time()
         waiting = Queue(maxsize=2*num_workers)
         nursery = Queue(maxsize=2*num_workers)
         pipe_to, pipe_from = Pipe()
         print(f'{num_workers=}')
         pool = Pool(num_workers, evaluator, (self.chrm, waiting, nursery))
-        mgr = Process(target=manager, args=(self, terminate, waiting, nursery, pipe_to))
+        mgr = Process(target=manager, args=(self, terminate, waiting, nursery, pipe_to, batch_size))
         mgr.start()
         new_pop = None
         while not new_pop:

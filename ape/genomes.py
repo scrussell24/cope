@@ -83,6 +83,5 @@ class TreeGenome:
             children = [cls.rand_tree(depth - 1) for n in range(cls.branch)]
         return TreeNode(choice(cls.genes), children)
 
-
     def __str__(self):
         return f'{self.fitness=} {str(self.tree)}'
