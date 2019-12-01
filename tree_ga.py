@@ -16,8 +16,7 @@ class MyTreeGenome(TreeGenome):
 
 def test_evolve():
     pop = Population(MyTreeGenome, 1000)
-    #pop = pop.sync_evolve(terminate=lambda evals, pop: pop[0].fitness <= 0 or evals > 1000000)
-    pop = pop.evolve(terminate=lambda x, y: y[0].fitness <= 0 or x > 1000000, batch_size=8)
+    pop = pop.evolve(terminate=lambda x, y: y[0].fitness <= 0 or x > 1000000)
     first = pop[0]
     print(first.fitness)
 

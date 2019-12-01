@@ -46,9 +46,5 @@ class TreeNode:
             string += child.__str__(level=level+1)
         return string
 
-    def __deepcopy__(self, memo):
-        children = [deepcopy(n) for n in self.children]
-        return self.__class__(self.data, children)
-
     def __len__(self):
         return self.reduce(lambda x, y: y + 1, 0)

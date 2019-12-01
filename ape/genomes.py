@@ -35,7 +35,7 @@ class ListGenome:
         return cls([choice(cls.genes) for n in range(cls.length)])
 
     def __str__(self):
-        return f'{self.fitness=} {str(self.gene_list)}'
+        return f'fitness={self.fitness} {str(self.gene_list)}'
 
 
 class BListGenome(ListGenome):
@@ -84,4 +84,4 @@ class TreeGenome:
         return TreeNode(choice(cls.genes), children)
 
     def __str__(self):
-        return f'{self.fitness=} {str(self.tree)}'
+        return f'fitness={self.fitness} {str(self.tree)}'

@@ -28,11 +28,11 @@ def manager(pop, terminate, waiting, nursery, pipe_to, batch_size):
         if evals > 0 and evals % len(pop) == 0:
             total_time = time() - start_time
             evals_per_sec = evals / total_time
-            print(f'{evals=}')
-            print(f'{evals_per_sec=}')
-            print(f'{waiting.qsize()=}')
-            print(f'{nursery.qsize()=}')
-            print(f'{pop[0].fitness=}')
+            print(f'evals={evals}')
+            print(f'evals_per_sec={evals_per_sec}')
+            print(f'waiting_qsize={waiting.qsize()}')
+            print(f'nursery_qsize={nursery.qsize()}')
+            print(f'fitness={pop[0].fitness}')
         if not waiting.full() and not nursery.full():
             # try some batching
             couples = []
@@ -47,7 +47,7 @@ def manager(pop, terminate, waiting, nursery, pipe_to, batch_size):
                 pop.pop(len(pop) - pop.rand_index() - 1)
                 pop.add(child)
             evals += batch_size
-    print(f'Done {evals=}, {pop[0].fitness=}')
+    print(f'Done evals={evals}, fitness={pop[0].fitness}')
     pipe_to.send(pop)
 
 
@@ -64,12 +64,12 @@ class Population(sortedlist):
         if not batch_size:
             batch_size = ceil(log(len(self)) / 2.0)
             # batch_size = ceil(len(self)**(1/3.0))
-            print(f'{batch_size=}')
+            print(f'batch_size={batch_size}')
         start_time = time()
         waiting = Queue(maxsize=2*num_workers)
         nursery = Queue(maxsize=2*num_workers)
         pipe_to, pipe_from = Pipe()
-        print(f'{num_workers=}')
+        print(f'num_workers={num_workers}')
         pool = Pool(num_workers, evaluator, (self.chrm, waiting, nursery))
         mgr = Process(target=manager, args=(self, terminate, waiting, nursery, pipe_to, batch_size))
         mgr.start()
@@ -78,8 +78,8 @@ class Population(sortedlist):
             new_pop = pipe_from.recv()
         total_sec = time() - start_time
         total_min = total_sec / 60
-        print(f'{total_sec=}')
-        print(f'{total_min=}')
+        print(f'total_sec={total_sec}')
+        print(f'total_min={total_min}')
         return new_pop
 
     def sync_evolve(self, terminate):
@@ -87,26 +87,27 @@ class Population(sortedlist):
         gen_start = time()
         gen = 0
         evals = 0
-        while not terminate(evals := evals + 1, self):
+        while not terminate(evals, self):
             if evals % len(self) == 0:
                 gen_total = time() - gen_start
                 gen_start = time()
                 evals_per_sec = len(self) / gen_total
-                print(f'{gen=}')
-                print(f'{gen_total=}')
-                print(f'{evals=}')
-                print(f'{evals_per_sec=}')
-                print(f'{self[0].fitness=}')
+                print(f'gen={gen}')
+                print(f'gen_totals={gen_total}')
+                print(f'evals={evals}')
+                print(f'evals_per_sec={evals_per_sec}')
+                print(f'fitness={self[0].fitness}')
                 gen += 1
             mom = self[self.rand_index()]
             dad = self[self.rand_index()]
             child = self.chrm.mate(mom, dad)
             self.pop(len(self) - self.rand_index() - 1)
             self.add(child)
+            evals += 1
         total_sec = time() - start_time
         total_min = total_sec / 60
-        print(f'{total_sec=}')
-        print(f'{total_min=}')
+        print(f'total_sec={total_sec}')
+        print(f'total_min={total_min}')
         return self
 
     def rand_index(self):
