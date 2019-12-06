@@ -13,9 +13,13 @@ from ape.tree import TreeNode
 from ape.evaluate import evaluate as hy_eval
 
 
+xs = [n/10. for n in range(-10, 10)]
+
+
 class GPGenome:
     # These must be set
     depth = None
+    branch = None
     functions = None
     terminals = None
     fn_term_ratio = 0.5
@@ -27,12 +31,9 @@ class GPGenome:
 
     def calc_fitness(self):
         n = 20
-        xs = [n/10. for n in range(-10, 10)]
-        ys = [n/10. for n in range(-10, 10)]
         error_sum = 0
         for x in xs:
-            for y in ys:
-                error_sum += (((x**3 - x**1) - evaluate(self.tree, x))**2)/float(n)
+            error_sum += (((x**4 - x**3) - evaluate(self.tree, x))**2)/float(n)
         rmse = sqrt(error_sum)
         return rmse
 
@@ -41,39 +42,35 @@ class GPGenome:
         child, dad_tree = deepcopy(mom.tree), deepcopy(dad.tree)
         # crossover
         i = random.randint(0, len(child) - 1)
-        j = random.randint(0, len(dad_tree) - 1)
-        dad_node = dad_tree.get(j)
+        dad_node = dad_tree.get(i)
         child.set(i, dad_node)
         # mutate
         if random.random() < cls.mutation_rate:
             i = random.randint(0, len(child) - 1)
-            depth = child.get(i).depth()
-            gene = cls.rand_tree(depth)
-            child.set(i, gene)
+            node = child.get(i)
+            terminal = True if node.depth() == 0 else False
+            node.data = cls.rand_gene(terminal=terminal).val
         return cls(child)
 
     @classmethod
     def rand(cls):
         return cls(cls.rand_tree(cls.depth))
 
-    #@classmethod
-    #def rand_gene(cls):
-
+    @classmethod
+    def rand_gene(cls, terminal=False):
+        if random.random() > cls.fn_term_ratio or terminal:
+            return random.choice(cls.terminals)
+        return random.choice(cls.functions)
 
     @classmethod
     def rand_tree(cls, depth):
-        if depth > 0 and random.random() < cls.fn_term_ratio:
-            # choose a function
-            primitive = random.choice(cls.functions)
-            mn = primitive.min_args
-            mx = primitive.max_args
-            num_children = random.randint(mn, mx)
-            children = [cls.rand_tree(depth - 1) for n in range(num_children)]
-            return TreeNode(primitive.fn, children)
+        if depth > 0:
+            gene = cls.rand_gene()
+            children = [cls.rand_tree(depth - 1) for n in range(cls.branch)]
+            return TreeNode(gene.val, children)
         else:
-            # choose a terminal
-            primitive = random.choice(cls.terminals)
-            return TreeNode(primitive.terminal, [])
+            gene = cls.rand_gene(terminal=True)
+            return TreeNode(gene.val, [])
 
     def __str__(self):
         return f'fitness={self.fitness} {str(self.tree)}'
@@ -82,20 +79,12 @@ class GPGenome:
 def evaluate(variables, tree, *args):
     points = {}
     for n in range(len(args)):
-        points[variables[n]] = args[n] 
-    return hy_eval(points, tree)
-
-
-@dataclass
-class FunctionPrimitive:
-    fn: Any
-    min_args: int
-    max_args: int
-
+        points[variables[n]] = args[n]
+        return hy_eval(points, tree)
 
 @dataclass
-class TerminalPrimitive:
-    terminal: Any
+class Primitive:
+    val: Any
 
 
 def first(x, y):
@@ -108,18 +97,19 @@ def second(x, y):
 
 variables = ['x']
 evaluate = partial(evaluate, variables)
-terminals = [TerminalPrimitive(var) for var in variables]
+terminals = [Primitive(var) for var in variables]
 functions = [
-    FunctionPrimitive(operator.add, 2, 2),
-    FunctionPrimitive(operator.sub, 2, 2),
-    FunctionPrimitive(operator.mul, 2, 2),
-    FunctionPrimitive(first, 2, 2),
-    FunctionPrimitive(second, 2, 2)
+    Primitive(operator.add),
+    Primitive(operator.sub),
+    Primitive(operator.mul),
+    Primitive(first),
+    Primitive(second)
 ]
 
 
 class MyGPGenome(GPGenome):
     depth = 6
+    branch = 2
     functions = functions
     terminals = terminals
     fn_term_ratio = 0.75
