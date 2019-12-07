@@ -15,8 +15,8 @@ class MyListGenome(ListGenome):
 
 def test_list_evolve():
     pop = Population(MyListGenome, 10)
-    pop.sync_evolve(terminate=lambda evals, pop: pop[0].fitness <= 0 or evals > 1000000)
-    first = pop[0]
+    pop.sync_evolve(terminate=lambda evals, pop: pop.get_chrm(0).fitness <= 0 or evals > 1000000)
+    first = pop.get_chrm(0)
     assert first.fitness == 0
 
 
@@ -31,8 +31,8 @@ class MyBListGenome(BListGenome):
 
 def test_blist_evolve():
     pop = Population(MyBListGenome, 10)
-    pop.sync_evolve(terminate=lambda evals, pop: pop[0].fitness <= 0 or evals > 1000000)
-    first = pop[0]
+    pop.sync_evolve(terminate=lambda evals, pop: pop.get_chrm(0).fitness <= 0 or evals > 1000000)
+    first = pop.get_chrm(0)
     assert first.fitness == 0
 
 
@@ -48,6 +48,6 @@ class MyTreeGenome(TreeGenome):
 
 def test_tree_evolve():
     pop = Population(MyTreeGenome, 10)
-    pop.sync_evolve(terminate=lambda evals, pop: pop[0].fitness <= 0 or evals > 1000000)
-    first = pop[0]
+    pop.sync_evolve(terminate=lambda evals, pop: pop.get_chrm(0).fitness <= 0 or evals > 1000000)
+    first = pop.get_chrm(0)
     assert first.fitness == 0

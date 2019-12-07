@@ -15,8 +15,8 @@ class MyListGenome(BListGenome):
 
 def test_evolve():
     pop = Population(MyListGenome, 1000)
-    pop = pop.evolve(terminate=lambda x, y: y[0].fitness <= 0 or x > 1000000)
-    first = pop[0]
+    pop = pop.evolve(terminate=lambda x, y: y.get_chrm(0).fitness <= 0 or x > 1000000)
+    first = pop.get_chrm(0)
     print(first.fitness)
 
 if __name__ == '__main__':
