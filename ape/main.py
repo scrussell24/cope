@@ -128,7 +128,7 @@ class Population(sorteddict):
             self[chrm.fitness].append(chrm)
 
     def _get_key(self, index):
-        # think this function is slowww
+        # opporotunity for speed up here
         for k, v in self.items():
             index = index - len(v)
             if index <= 0:
@@ -136,6 +136,8 @@ class Population(sorteddict):
 
     def __len__(self):
         return self.size
+        # there's not really a
+        # guarentee that this is true
         # size = 0
         # for k, v in self.items():
         #     size += len(v)
