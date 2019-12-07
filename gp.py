@@ -3,7 +3,6 @@ import operator
 from math import sqrt
 from typing import Any
 from copy import deepcopy
-from dataclasses import dataclass
 from functools import partial, reduce
 
 import hy
@@ -33,7 +32,7 @@ class GPGenome:
         n = 20
         error_sum = 0
         for x in xs:
-            error_sum += (((x**4 - x**3) - evaluate(self.tree, x))**2)/float(n)
+            error_sum += (((x**4 - x**3 - x**2 - x) - evaluate(self.tree, x))**2)/float(n)
         rmse = sqrt(error_sum)
         return rmse
 
@@ -82,9 +81,10 @@ def evaluate(variables, tree, *args):
         points[variables[n]] = args[n]
         return hy_eval(points, tree)
 
-@dataclass
+
 class Primitive:
-    val: Any
+    def __init__(self, val):
+        self.val = val
 
 
 def first(x, y):
@@ -118,7 +118,7 @@ class MyGPGenome(GPGenome):
 
 def test_evolve():
     pop = Population(MyGPGenome, 1000)
-    pop = pop.evolve(terminate=lambda x, y: y[0].fitness <= 0.001 or x > 100000)
+    pop = pop.evolve(terminate=lambda x, y: y[0].fitness <= 0.001 or x > 1000000)
     first = pop[0]
     print()
     print(first)
