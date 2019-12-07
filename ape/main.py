@@ -52,6 +52,7 @@ class Population(sorteddict):
     def __init__(self, chrm, size):
         super().__init__()
         self.chrm = chrm
+        self.size = size
         chrms = [chrm.rand() for n in range(size)]
         for chrm in chrms:
             self.add_chrm(chrm)
@@ -127,16 +128,18 @@ class Population(sorteddict):
             self[chrm.fitness].append(chrm)
 
     def _get_key(self, index):
+        # think this function is slowww
         for k, v in self.items():
             index = index - len(v)
             if index <= 0:
                 return k
 
     def __len__(self):
-        size = 0
-        for k, v in self.items():
-            size += len(v)
-        return size
+        return self.size
+        # size = 0
+        # for k, v in self.items():
+        #     size += len(v)
+        # return size
 
     def __str__(self):
         s = ""
