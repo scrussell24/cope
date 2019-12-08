@@ -13,6 +13,7 @@ from ape.evaluate import evaluate as hy_eval
 
 
 xs = [n/10. for n in range(-10, 10)]
+ys = [n/10. for n in range(-10, 10)]
 
 
 class GPGenome:
@@ -32,6 +33,7 @@ class GPGenome:
         n = 20
         error_sum = 0
         for x in xs:
+            #for y in ys:
             error_sum += (((x**4 - x**3 - x**2 - x) - evaluate(self.tree, x))**2)/float(n)
         rmse = sqrt(error_sum)
         return rmse
@@ -108,12 +110,12 @@ functions = [
 
 
 class MyGPGenome(GPGenome):
-    depth = 6
+    depth = 5
     branch = 2
     functions = functions
     terminals = terminals
     fn_term_ratio = 0.75
-    mutation_rate = 0.1
+    mutation_rate = 0.25
 
 
 def test_evolve():
