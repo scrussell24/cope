@@ -1,4 +1,5 @@
 from time import time
+from functools import reduce
 from random import random, randint
 from math import sqrt, pow, floor, log, ceil
 from multiprocessing import Queue, Pool, Process, Pipe, cpu_count
@@ -28,6 +29,8 @@ def manager(pop, terminate, waiting, nursery, pipe_to, batch_size):
             print(f'evals_per_sec={evals_per_sec}')
             print(f'waiting_qsize={waiting.qsize()}')
             print(f'nursery_qsize={nursery.qsize()}')
+            print(f'top-bucket={len(pop.values()[0])}')
+            print(f'bukcets={pop._key_length()}')
             print(f'fitness={pop.get_chrm(0).fitness}')
         if not waiting.full() and not nursery.full():
             # try some batching
@@ -107,7 +110,7 @@ class Population(sorteddict):
         return self
 
     def rand_index(self):
-        ex = 32 * log(len(self))
+        ex = 2 * log(len(self))
         return floor(len(self) * pow(random(), ex))
 
     def pop_chrm(self, index):
@@ -128,7 +131,7 @@ class Population(sorteddict):
             self[chrm.fitness].append(chrm)
 
     def _get_key(self, index):
-        # opporotunity for speed up here
+        # maybe speed up here
         for k, v in self.items():
             index = index - len(v)
             if index <= 0:
@@ -142,6 +145,10 @@ class Population(sorteddict):
         # for k, v in self.items():
         #     size += len(v)
         # return size
+
+    def _key_length(self):
+        # seems like theirs a bug in sorteddict keylength
+        return reduce(lambda x, y: x + 1, self, 0)
 
     def __str__(self):
         s = ""

@@ -44,11 +44,12 @@ class GPGenome:
         dad_node = dad_tree.get(i)
         child.set(i, dad_node)
         # mutate
-        if random.random() < cls.mutation_rate:
-            i = random.randint(0, len(child) - 1)
-            node = child.get(i)
-            terminal = True if node.depth() == 0 else False
-            node.data = cls.rand_gene(terminal=terminal).val
+        def mutate(node):
+            if random.random() < cls.mutation_rate:
+                terminal = True if node.depth() == 0 else False
+                return cls.rand_gene(terminal=terminal).val
+            return node.data
+        child.walk(mutate)
         return cls(child)
 
     @classmethod
@@ -86,12 +87,12 @@ class Primitive:
         self.val = val
 
 
-def first(x, y):
-    return x
+def first(i, j):
+    return i
 
 
-def second(x, y):
-    return y
+def second(i, j):
+    return j
 
 
 variables = ['x']
@@ -107,22 +108,20 @@ functions = [
 
 
 class MyGPGenome(GPGenome):
-    depth = 6
+    depth = 5
     branch = 2
     functions = functions
     terminals = terminals
     fn_term_ratio = 0.75
-    mutation_rate = 0.1
+    mutation_rate = 0.25
 
 
 def test_evolve():
     pop = Population(MyGPGenome, 1000)
-    pop = pop.evolve(terminate=lambda x, y: y.get_chrm(0).fitness <= 0.001 or x > 1000000)
+    pop = pop.evolve(terminate=lambda x, y: y.get_chrm(0).fitness <= 0.001 or x > 100000)
     first = pop.get_chrm(0)
-    print()
     print(first)
     print(first.fitness)
-    print(first.tree.depth())
 
 
 if __name__ == '__main__':
