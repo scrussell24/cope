@@ -29,7 +29,6 @@ def manager(pop, terminate, waiting, nursery, pipe_to, batch_size):
             print(f'evals_per_sec={evals_per_sec}')
             print(f'waiting_qsize={waiting.qsize()}')
             print(f'nursery_qsize={nursery.qsize()}')
-            # print(f'top-bucket={len(pop.pop_dict.values()[0])}')
             print(f'bukcets={len(pop.pop_dict)}')
             print(f'fitness={pop.get(0).fitness}')
         if not waiting.full() and not nursery.full():
@@ -112,7 +111,7 @@ class Population:
         return self
 
     def rand_index(self):
-        ex = 2 * log(len(self))
+        ex = 4 * log(len(self))
         return floor(len(self) * pow(random(), ex))
 
     def pop(self, index):

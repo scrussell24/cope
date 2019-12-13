@@ -27,13 +27,42 @@ class GPGenome:
     def __init__(self, *args, **kwargs):
         self.tree = args[0]
         self.fitness = self.calc_fitness()
+        self.compiled = self.compile(args[0])
+
+    @classmethod
+    def compile(cls, tree):
+        new_tree = TreeNode(None, None)
+        if callable(tree.data):
+            # first compile children
+           
+            # reaplce with first child
+            if tree.data.__name__ == 'first':
+                new_tree.data = tree.children[0].data
+                new_tree.children = [cls.compile(c) for c in tree.children[0].children]
+            # replace with second child
+            elif tree.data.__name__ == 'second':
+                new_tree.data = tree.children[1].data
+                new_tree.children = [cls.compile(c) for c in tree.children[1].children]
+            else:
+                try:
+                    # try executing the function
+                    new_tree.data = tree.data(tree.children[0], tree.children[1])
+                    new_tree.children = []
+                except Exception as err:
+                    new_tree.data = tree.data
+                    new_tree.children = [cls.compile(c) for c in tree.children]
+        else:
+            # not a function so get rid of children
+            new_tree.data = tree.data
+            new_tree.children = []
+        return new_tree
 
     def calc_fitness(self):
         error_sum = 0
         num_samples = len(intervals)**len(variables)
         for x in intervals:
             for y in intervals:
-                error_sum += (((x**3 - y**3) - evaluate(self.tree, x, y))**2)/float(num_samples)
+                error_sum += (((x**2 - y**2) - evaluate(self.tree, x, y))**2)/float(num_samples)
         rmse = sqrt(error_sum)
         return rmse
 
@@ -74,7 +103,7 @@ class GPGenome:
             return TreeNode(gene.val, [])
 
     def __str__(self):
-        return f'fitness={self.fitness} {str(self.tree)}'
+        return f'fitness={self.fitness} {str(self.compiled)}'
 
 
 def evaluate(variables, tree, *args):
@@ -97,7 +126,7 @@ def second(x, y):
 
 
 evaluate = partial(evaluate, variables)
-terminals = [Primitive(var) for var in variables]
+terminals = [Primitive(var) for var in variables] + [Primitive(n) for n in range(10)]
 functions = [
     Primitive(operator.add),
     Primitive(operator.sub),
@@ -108,7 +137,7 @@ functions = [
 
 
 class MyGPGenome(GPGenome):
-    depth = 6
+    depth = 5
     branch = 2
     functions = functions
     terminals = terminals
@@ -117,9 +146,10 @@ class MyGPGenome(GPGenome):
 
 
 def test_evolve():
-    pop = Population(MyGPGenome, 1000)
-    pop = pop.evolve(terminate=lambda x, y: y.get(0).fitness <= 0.001 or x > 100000)
+    pop = Population(MyGPGenome, 10000)
+    pop = pop.evolve(terminate=lambda x, y: y.get(0).fitness <= 0.001 or x > 1000000)
     first = pop.get(0)
+    print(first.tree)
     print(first)
     print(first.fitness)
 
