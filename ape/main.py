@@ -4,7 +4,7 @@ from random import random, randint
 from math import sqrt, pow, floor, log, ceil
 from multiprocessing import Queue, Pool, Process, Pipe, cpu_count
 
-from blist import sorteddict
+from blist import sortedlist
 
 
 def evaluator(chrm, waiting, nursery):
@@ -29,36 +29,38 @@ def manager(pop, terminate, waiting, nursery, pipe_to, batch_size):
             print(f'evals_per_sec={evals_per_sec}')
             print(f'waiting_qsize={waiting.qsize()}')
             print(f'nursery_qsize={nursery.qsize()}')
-            print(f'top-bucket={len(pop.values()[0])}')
-            print(f'bukcets={pop._key_length()}')
-            print(f'fitness={pop.get_chrm(0).fitness}')
+            # print(f'top-bucket={len(pop.pop_dict.values()[0])}')
+            print(f'bukcets={len(pop.pop_dict)}')
+            print(f'fitness={pop.get(0).fitness}')
         if not waiting.full() and not nursery.full():
             # try some batching
             couples = []
             for n in range(batch_size):
-                mom = pop.get_chrm(pop.rand_index())
-                dad = pop.get_chrm(pop.rand_index())
+                mom = pop.get(pop.rand_index())
+                dad = pop.get(pop.rand_index())
                 couples.append((mom, dad))
             waiting.put(couples)
         if not nursery.empty():
             kids = nursery.get(False)
             for child in kids:
-                pop.pop_chrm(len(pop) - pop.rand_index() - 1)
-                pop.add_chrm(child)
+                pop.pop(len(pop) - pop.rand_index() - 1)
+                pop.add(child)
             evals += batch_size
-    print(f'Done evals={evals}, fitness={pop.get_chrm(0).fitness}')
+    print(f'Done evals={evals}, fitness={pop.get(0).fitness}')
     pipe_to.send(pop)
 
 
-class Population(sorteddict):
+class Population:
 
     def __init__(self, chrm, size):
         super().__init__()
+        self.fitness_indeces = sortedlist([])
+        self.pop_dict = dict()
         self.chrm = chrm
         self.size = size
         chrms = [chrm.rand() for n in range(size)]
         for chrm in chrms:
-            self.add_chrm(chrm)
+            self.add(chrm)
 
     def evolve(self, terminate, num_workers=cpu_count(), batch_size=None):
         if not batch_size:
@@ -95,13 +97,13 @@ class Population(sorteddict):
                 print(f'gen_totals={gen_total}')
                 print(f'evals={evals}')
                 print(f'evals_per_sec={evals_per_sec}')
-                print(f'fitness={self.get_chrm(0).fitness}')
+                print(f'fitness={self.get(0).fitness}')
                 gen += 1
-            mom = self.get_chrm(self.rand_index())
-            dad = self.get_chrm(self.rand_index())
+            mom = self.get(self.rand_index())
+            dad = self.get(self.rand_index())
             child = self.chrm.mate(mom, dad)
-            self.pop_chrm(len(self) - self.rand_index() - 1)
-            self.add_chrm(child)
+            self.pop(len(self) - self.rand_index() - 1)
+            self.add(child)
             evals += 1
         total_sec = time() - start_time
         total_min = total_sec / 60
@@ -110,49 +112,34 @@ class Population(sorteddict):
         return self
 
     def rand_index(self):
-        ex = 32 * log(len(self))
+        ex = 2 * log(len(self))
         return floor(len(self) * pow(random(), ex))
 
-    def pop_chrm(self, index):
-        key = self._get_key(index)
-        chrm = self[key].pop(randint(0, len(self[key]) - 1))
-        if len(self[key]) == 0:
-            del self[key]
+    def pop(self, index):
+        key = self.fitness_indeces[index]
+        chrm = self.pop_dict[key].pop(randint(0, len(self.pop_dict[key]) - 1))
+        if len(self.pop_dict[key]) == 0:
+            del self.pop_dict[key]
+        self.fitness_indeces.pop(index)
         return chrm
 
-    def get_chrm(self, index):
-        key = self._get_key(index)
-        return self[key][randint(0, len(self[key]) - 1)]
+    def get(self, index):
+        key = self.fitness_indeces[index]
+        return self.pop_dict[key][randint(0, len(self.pop_dict[key]) - 1)]
 
-    def add_chrm(self, chrm):
-        if self.get(chrm.fitness) == None:
-            self[chrm.fitness] = [chrm]
+    def add(self, chrm):
+        if self.pop_dict.get(chrm.fitness) == None:
+            self.pop_dict[chrm.fitness] = [chrm]
         else:
-            self[chrm.fitness].append(chrm)
-
-    def _get_key(self, index):
-        # maybe speed up here
-        for k, v in self.items():
-            index = index - len(v)
-            if index <= 0:
-                return k
+            self.pop_dict[chrm.fitness].append(chrm)
+        self.fitness_indeces.add(chrm.fitness)
 
     def __len__(self):
-        return self.size
-        # there's not really a
-        # guarentee that this is true
-        # size = 0
-        # for k, v in self.items():
-        #     size += len(v)
-        # return size
-
-    def _key_length(self):
-        # seems like theirs a bug in sorteddict keylength
-        return reduce(lambda x, y: x + 1, self, 0)
+        return len(self.fitness_indeces)
 
     def __str__(self):
         s = ""
-        for k, v in self.items():
+        for k, v in self.pop_dict.items():
             for n in list(v):
                 s += str(n) + '\n'
         return s

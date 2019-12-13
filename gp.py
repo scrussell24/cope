@@ -1,9 +1,8 @@
 import random
 import operator
 from math import sqrt
-from typing import Any
 from copy import deepcopy
-from functools import partial, reduce
+from functools import partial
 
 import hy
 
@@ -12,7 +11,7 @@ from ape.tree import TreeNode
 from ape.evaluate import evaluate as hy_eval
 
 
-variables = ['x']
+variables = ['x', 'y']
 intervals = [n/10. for n in range(-10, 10)]
 
 
@@ -33,7 +32,8 @@ class GPGenome:
         error_sum = 0
         num_samples = len(intervals)**len(variables)
         for x in intervals:
-            error_sum += (((x**4 - x**3 - x**2 - x) - evaluate(self.tree, x))**2)/float(num_samples)
+            for y in intervals:
+                error_sum += (((x**3 - y**3) - evaluate(self.tree, x, y))**2)/float(num_samples)
         rmse = sqrt(error_sum)
         return rmse
 
@@ -117,9 +117,9 @@ class MyGPGenome(GPGenome):
 
 
 def test_evolve():
-    pop = Population(MyGPGenome, 300)
-    pop = pop.evolve(terminate=lambda x, y: y.get_chrm(0).fitness <= 0.001 or x > 100000)
-    first = pop.get_chrm(0)
+    pop = Population(MyGPGenome, 1000)
+    pop = pop.evolve(terminate=lambda x, y: y.get(0).fitness <= 0.001 or x > 100000)
+    first = pop.get(0)
     print(first)
     print(first.fitness)
 
