@@ -12,7 +12,8 @@ from ape.tree import TreeNode
 from ape.evaluate import evaluate as hy_eval
 
 
-xs = [n/10. for n in range(-10, 10)]
+variables = ['x']
+intervals = [n/10. for n in range(-10, 10)]
 
 
 class GPGenome:
@@ -29,10 +30,10 @@ class GPGenome:
         self.fitness = self.calc_fitness()
 
     def calc_fitness(self):
-        n = 20
         error_sum = 0
-        for x in xs:
-            error_sum += (((x**4 - x**3 - x**2 - x) - evaluate(self.tree, x))**2)/float(n)
+        num_samples = len(intervals)**len(variables)
+        for x in intervals:
+            error_sum += (((x**4 - x**3 - x**2 - x) - evaluate(self.tree, x))**2)/float(num_samples)
         rmse = sqrt(error_sum)
         return rmse
 
@@ -80,22 +81,21 @@ def evaluate(variables, tree, *args):
     points = {}
     for n in range(len(args)):
         points[variables[n]] = args[n]
-        return hy_eval(points, tree)
+    return hy_eval(points, tree)
 
 class Primitive:
     def __init__(self, val):
         self.val = val
 
 
-def first(i, j):
-    return i
+def first(x, y):
+    return x
 
 
-def second(i, j):
-    return j
+def second(x, y):
+    return y
 
 
-variables = ['x']
 evaluate = partial(evaluate, variables)
 terminals = [Primitive(var) for var in variables]
 functions = [
@@ -108,7 +108,7 @@ functions = [
 
 
 class MyGPGenome(GPGenome):
-    depth = 5
+    depth = 6
     branch = 2
     functions = functions
     terminals = terminals
@@ -117,7 +117,7 @@ class MyGPGenome(GPGenome):
 
 
 def test_evolve():
-    pop = Population(MyGPGenome, 1000)
+    pop = Population(MyGPGenome, 300)
     pop = pop.evolve(terminate=lambda x, y: y.get_chrm(0).fitness <= 0.001 or x > 100000)
     first = pop.get_chrm(0)
     print(first)

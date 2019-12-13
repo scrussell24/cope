@@ -110,7 +110,7 @@ class Population(sorteddict):
         return self
 
     def rand_index(self):
-        ex = 2 * log(len(self))
+        ex = 32 * log(len(self))
         return floor(len(self) * pow(random(), ex))
 
     def pop_chrm(self, index):
