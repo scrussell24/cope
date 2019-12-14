@@ -14,7 +14,7 @@ class TreeNode:
         return fn(self, reduced)
 
     def walk(self, fn):
-        self.data = fn(self.data)
+        self.data = fn(self)
         for child in self.children:
             child.walk(fn)
 

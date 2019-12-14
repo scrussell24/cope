@@ -18,7 +18,7 @@ def test_walk():
     child1 = TreeNode(1, [])
     child2 = TreeNode(2, [])
     tree = TreeNode(3, [child1, child2])
-    tree.walk(lambda n: n*2)
+    tree.walk(lambda n: n.data*2)
     assert tree.reduce(lambda n, r: n.data + r, 0) == 12
 
 def test_depth():
