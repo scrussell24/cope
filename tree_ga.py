@@ -1,7 +1,7 @@
 from functools import reduce
 
-from ape import Population
-from ape.genomes import TreeGenome
+from cope import Population
+from cope.genomes import TreeGenome
 
 
 class MyTreeGenome(TreeGenome):

@@ -1,4 +1,4 @@
-from ape.tree import TreeNode
+from cope.tree import TreeNode
 
 
 def test_constructor():

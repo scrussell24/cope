@@ -1,5 +1,5 @@
 #!/bin/bash
-python -m pycodestyle --max-line-length=110 ape/
+python -m pycodestyle --max-line-length=110 cope/
 # looks like linter isn't updated for walrus operator
 # retVal=$?
 # if [ $retVal -ne 0 ]; then
@@ -7,14 +7,14 @@ python -m pycodestyle --max-line-length=110 ape/
 #     exit $retVal
 # fi
 
-python -m mypy --ignore-missing-imports ape/
+python -m mypy --ignore-missing-imports cope/
 retVal=$?
 if [ $retVal -ne 0 ]; then
     echo "Type Checking Error"
     exit $retVal
 fi
 
-python -m pytest --cov=ape/
+python -m pytest --cov=cope/
 retVal=$?
 if [ $retVal -ne 0 ]; then
     echo "Test Error"

@@ -1,7 +1,7 @@
 from functools import reduce
 
-from ape import Population
-from ape.genomes import ListGenome, BListGenome, TreeGenome
+from cope import Population
+from cope.genomes import ListGenome, BListGenome, TreeGenome
 
 
 class MyListGenome(ListGenome):

@@ -6,9 +6,9 @@ from functools import partial
 
 import hy
 
-from ape import Population
-from ape.tree import TreeNode
-from ape.evaluate import evaluate as hy_eval
+from cope import Population
+from cope.tree import TreeNode
+from cope.evaluate import evaluate as hy_eval
 
 
 variables = ['x', 'y']

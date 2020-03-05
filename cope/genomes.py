@@ -3,7 +3,7 @@ from random import randint, random, choice
 
 from blist import blist
 
-from ape.tree import TreeNode
+from cope.tree import TreeNode
 
 
 class ListGenome:
