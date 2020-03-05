@@ -146,8 +146,8 @@ class MyGPGenome(GPGenome):
 
 
 def test_evolve():
-    pop = Population(MyGPGenome, 10000)
-    stats = pop.evolve(terminate=lambda x, y: y.get(0).fitness <= 0.001 or x > 1000000)
+    pop = Population(MyGPGenome, 100)
+    stats = pop.evolve(terminate=lambda x, y: y.get(0).fitness <= 0.001 or x > 100000)
     print(stats)
 
 

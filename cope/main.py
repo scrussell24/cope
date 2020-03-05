@@ -24,8 +24,6 @@ def manager(pop, terminate, waiting, nursery, pipe_to, batch_size):
     while not terminate(evals, pop):
         if evals > 0 and evals >= len(pop):
             total_time = time() - start_time
-            # print(f'waiting_qsize={waiting.qsize()}')
-            # print(f'nursery_qsize={nursery.qsize()}')
             gen = StatsGen(
                 total_time,
                 evals,
