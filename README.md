@@ -1,10 +1,10 @@
 # COntinuous Population Evolution (COPE)
 
-COPE is an algorithm inspried by genetic algorithms. The main difference being that 
+COPE is an evolutionary algorithm much like a genetic algorithm.
 
 ## Setup
 
-create a virtualenv using your preffered method
+create a virtualenv using your preferred method
 
 ```
 virtualenv -p python3 env
