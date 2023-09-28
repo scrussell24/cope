@@ -1,7 +1,6 @@
 from time import time
-from functools import reduce
 from random import random, randint
-from math import sqrt, pow, floor, log, ceil
+from math import pow, floor, log, ceil
 from multiprocessing import Queue, Pool, Process, Pipe, cpu_count
 
 from blist import sortedlist, blist
@@ -21,16 +20,18 @@ def evaluator(chrm, waiting, nursery):
 def manager(pop, terminate, waiting, nursery, pipe_to, batch_size):
     start_time = time()
     evals = 0
-    while not terminate(evals, pop):
+    gens = 0
+    while not terminate(gens, pop):
         if evals > 0 and evals >= len(pop):
             total_time = time() - start_time
             gen = StatsGen(
                 total_time,
                 evals,
                 pop.get(0).fitness,
-                len(pop.pop_dict)
+                len(pop.pop_dict),
             )
             evals = 0
+            gens += 1
             start_time = time()
             pipe_to.send(Message(MessageType.GEN, gen))
         if not waiting.full() and not nursery.full():
@@ -46,6 +47,16 @@ def manager(pop, terminate, waiting, nursery, pipe_to, batch_size):
                 pop.pop(len(pop) - pop.rand_index() - 1)
                 pop.add(child)
             evals += batch_size
+    else:
+        total_time = time() - start_time
+        gen = StatsGen(
+            total_time,
+            evals,
+            pop.get(0).fitness,
+            len(pop.pop_dict),
+        )
+        start_time = time()
+        pipe_to.send(Message(MessageType.GEN, gen))
     pipe_to.send(Message(MessageType.DONE, pop))
 
 
@@ -111,14 +122,16 @@ class Stats:
         if fn:
             fn(self)
         else:
-            print(self)
+            # print(self)
+            ...
 
     def add_gen(self, gen, fn=None):
         self.generations.append(gen)
         if fn:
             fn(self)
         else:
-            print(gen)
+            # print(gen)
+            ...
 
     def __str__(self):
         s = '# STATISTICS\n\n'
@@ -140,7 +153,6 @@ class Stats:
 class Population:
 
     def __init__(self, chrm, size):
-        super().__init__()
         self.fitness_indeces = sortedlist([])
         self.pop_dict = dict()
         self.chrm = chrm
@@ -165,6 +177,8 @@ class Population:
             message = pipe_from.recv()
             if message.type == MessageType.DONE:
                 new_pop = message.payload
+                self.fitness_indeces = new_pop.fitness_indeces
+                self.pop_dict = new_pop.pop_dict
             if message.type == MessageType.GEN:
                 stats.add_gen(message.payload)
         stats.end()
