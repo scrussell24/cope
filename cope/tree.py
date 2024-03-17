@@ -21,7 +21,7 @@ class TreeNode:
     def depth(self, depth=0):
         gd = depth  # greatest depth
         for child in self.children:
-            cd = child.depth(depth=depth+1)
+            cd = child.depth(depth=depth + 1)
             gd = cd if cd > gd else gd
         return gd
 
@@ -31,7 +31,7 @@ class TreeNode:
         for child in self.children:
             size = len(child)
             if index <= size:
-                return child.get(index-1)
+                return child.get(index - 1)
             index -= size
 
     def set(self, index, node):
@@ -40,10 +40,10 @@ class TreeNode:
         return self
 
     def __str__(self, level=0):
-        indent = '  |' * level
-        string = f'{indent} > {self.data}\n'
+        indent = "  |" * level
+        string = f"{indent} > {self.data}\n"
         for child in self.children:
-            string += child.__str__(level=level+1)
+            string += child.__str__(level=level + 1)
         return string
 
     def __len__(self):

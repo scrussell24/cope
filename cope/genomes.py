@@ -1,7 +1,7 @@
 from copy import deepcopy
-from random import randint, random, choice
+from random import choice, randint, random
 
-from blist import blist
+from sortedcontainers import SortedList as sortedlist
 
 from cope.tree import TreeNode
 
@@ -23,7 +23,7 @@ class ListGenome:
     def mate(cls, mom, dad):
         # crossover
         i = randint(0, cls.length - 1)
-        new = mom.gene_list[0:i] + dad.gene_list[i:cls.length]
+        new = mom.gene_list[0:i] + dad.gene_list[i: cls.length]
         # mutate
         if random() < cls.mutation_rate:
             i = randint(0, cls.length - 1)
@@ -35,13 +35,13 @@ class ListGenome:
         return cls([choice(cls.genes) for n in range(cls.length)])
 
     def __str__(self):
-        return f'fitness={self.fitness} {str(self.gene_list)}'
+        return f"fitness={self.fitness} {str(self.gene_list)}"
 
 
 class BListGenome(ListGenome):
 
     def __init__(self, *args, **kwargs):
-        self.gene_list = blist(args[0])
+        self.gene_list = sortedlist(args[0])
         self.fitness = self.calc_fitness()
 
 
@@ -84,4 +84,4 @@ class TreeGenome:
         return TreeNode(choice(cls.genes), children)
 
     def __str__(self):
-        return f'fitness={self.fitness} {str(self.tree)}'
+        return f"fitness={self.fitness} {str(self.tree)}"

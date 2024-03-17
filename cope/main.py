@@ -1,9 +1,9 @@
+from math import ceil, floor, log, pow
+from multiprocessing import Pipe, Pool, Process, Queue, cpu_count
+from random import randint, random
 from time import time
-from random import random, randint
-from math import pow, floor, log, ceil
-from multiprocessing import Queue, Pool, Process, Pipe, cpu_count
 
-from blist import sortedlist, blist
+from sortedcontainers import SortedList as sortedlist
 
 
 def evaluator(chrm, waiting, nursery):
@@ -22,12 +22,12 @@ def manager(pop, terminate, waiting, nursery, pipe_to, batch_size):
     evals = 0
     gens = 0
     while not terminate(gens, pop):
-        if evals > 0 and evals >= len(pop):
+        if evals > 0 and evals >= log(len(pop)):
             total_time = time() - start_time
-            gen = StatsGen(
+            gen = (
                 total_time,
                 evals,
-                pop.get(0).fitness,
+                pop.get(0),
                 len(pop.pop_dict),
             )
             evals = 0
@@ -49,10 +49,10 @@ def manager(pop, terminate, waiting, nursery, pipe_to, batch_size):
             evals += batch_size
     else:
         total_time = time() - start_time
-        gen = StatsGen(
+        gen = (
             total_time,
             evals,
-            pop.get(0).fitness,
+            pop.get(0),
             len(pop.pop_dict),
         )
         start_time = time()
@@ -61,39 +61,27 @@ def manager(pop, terminate, waiting, nursery, pipe_to, batch_size):
 
 
 class StatsGen:
-    headers = [
-        'elapsed time',
-        'evals',
-        'evals/sec',
-        'best fitness',
-        'fitness classes'
-    ]
+    headers = ["elapsed time", "evals", "evals/sec", "best fitness", "fitness classes"]
 
-    def __init__(
-            self,
-            total_time,
-            evaluations,
-            best_fitness,
-            fitness_classes
-        ):
+    def __init__(self, total_time, evaluations, best, fitness_classes):
         self.time_elapsed = total_time
         self.evaluations = evaluations
-        self.best_fitness = best_fitness
+        self.best_fitness = best.fitness
         self.fitness_classes = fitness_classes
-    
+
     def __str__(self):
-        s = ''
-        s += str(self.time_elapsed) + ', '
-        s += str(self.evaluations) + ', '
-        s += str(self.evaluations / self.time_elapsed) + ', '
-        s += str(self.best_fitness) + ', '
+        s = ""
+        s += str(self.time_elapsed) + ", "
+        s += str(self.evaluations) + ", "
+        s += str(self.evaluations / self.time_elapsed) + ", "
+        s += str(self.best_fitness) + ", "
         s += str(self.fitness_classes)
         return s
 
 
 class MessageType:
-    DONE = 'done'
-    GEN = 'gen'
+    DONE = "done"
+    GEN = "gen"
 
 
 class Message:
@@ -105,12 +93,13 @@ class Message:
 
 class Stats:
 
-    def __init__(self, batch_size=1, num_workers=1):
+    def __init__(self, batch_size=1, num_workers=1, stats_gen_class=StatsGen):
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self.generations = blist([])
+        self.generations = []
         self.total_time = 0
         self.start_time = None
+        self.stats_gen_class = stats_gen_class
 
     def start(self, fn=None):
         self.start_time = time()
@@ -125,8 +114,15 @@ class Stats:
             # print(self)
             ...
 
-    def add_gen(self, gen, fn=None):
-        self.generations.append(gen)
+    def add_gen(self, total_time, evaluations, best, fitness_classes, fn=None):
+        self.generations.append(
+            self.stats_gen_class(
+                total_time,
+                evaluations,
+                best,
+                fitness_classes,
+            )
+        )
         if fn:
             fn(self)
         else:
@@ -134,43 +130,52 @@ class Stats:
             ...
 
     def __str__(self):
-        s = '# STATISTICS\n\n'
-        s += '## GENERATIONS\n'
-        s += '#, '
+        s = "# STATISTICS\n\n"
+        s += "## GENERATIONS\n"
+        s += "#, "
         for header in StatsGen.headers:
-            s += str(header) + ', '
-        s = s[:-2] + '\n'
+            s += str(header) + ", "
+        s = s[:-2] + "\n"
         for i, gen in enumerate(self.generations):
-            s += str(i) + ', ' + str(gen) + '\n'
-        s += '\n'
-        s += '* batch_size: ' + str(self.batch_size) + '\n'
-        s += '* num_workers: ' + str(self.num_workers) + '\n'
-        s += '* num_generations: ' + str(len(self.generations)) + '\n'
-        s += '* total time: ' + str(self.total_time) + '\n\n'
+            s += str(i) + ", " + str(gen) + "\n"
+        s += "\n"
+        s += "* batch_size: " + str(self.batch_size) + "\n"
+        s += "* num_workers: " + str(self.num_workers) + "\n"
+        s += "* num_generations: " + str(len(self.generations)) + "\n"
+        s += "* total time: " + str(self.total_time) + "\n\n"
         return s
 
 
 class Population:
 
-    def __init__(self, chrm, size):
+    def __init__(self, chrm, size, stats_gen_class=StatsGen):
         self.fitness_indeces = sortedlist([])
         self.pop_dict = dict()
         self.chrm = chrm
         self.size = size
+        self.stats_gen_class = stats_gen_class
         chrms = [chrm.rand() for n in range(size)]
         for chrm in chrms:
             self.add(chrm)
 
     def evolve(self, terminate, num_workers=cpu_count(), batch_size=None):
+        print("num_workers: ", num_workers)
         if not batch_size:
             batch_size = ceil(log(len(self)) / 2.0)
-        stats = Stats(batch_size=batch_size, num_workers=num_workers)
+        stats = Stats(
+            batch_size=batch_size,
+            num_workers=num_workers,
+            stats_gen_class=self.stats_gen_class,
+        )
         stats.start()
-        waiting = Queue(maxsize=2*num_workers)
-        nursery = Queue(maxsize=2*num_workers)
+        waiting = Queue(maxsize=2 * num_workers)
+        nursery = Queue(maxsize=2 * num_workers)
         pipe_to, pipe_from = Pipe()
         pool = Pool(num_workers, evaluator, (self.chrm, waiting, nursery))
-        mgr = Process(target=manager, args=(self, terminate, waiting, nursery, pipe_to, batch_size))
+        mgr = Process(
+            target=manager,
+            args=(self, terminate, waiting, nursery, pipe_to, batch_size),
+        )
         mgr.start()
         new_pop = None
         while not new_pop:
@@ -180,7 +185,7 @@ class Population:
                 self.fitness_indeces = new_pop.fitness_indeces
                 self.pop_dict = new_pop.pop_dict
             if message.type == MessageType.GEN:
-                stats.add_gen(message.payload)
+                stats.add_gen(*message.payload)
         stats.end()
         return stats
 
@@ -200,12 +205,7 @@ class Population:
             if evals % len(self) == 0:
                 gen_total = time() - gen_start
                 gen_start = time()
-                stats.add_gen(StatsGen(
-                    gen_total,
-                    len(self),
-                    self.get(0).fitness,
-                    len(self.pop_dict)
-                ))
+                stats.add_gen(gen_total, len(self), self.get(0), len(self.pop_dict))
         stats.end()
         return stats
 
@@ -226,7 +226,7 @@ class Population:
         return self.pop_dict[key][randint(0, len(self.pop_dict[key]) - 1)]
 
     def add(self, chrm):
-        if self.pop_dict.get(chrm.fitness) == None:
+        if self.pop_dict.get(chrm.fitness) is None:
             self.pop_dict[chrm.fitness] = [chrm]
         else:
             self.pop_dict[chrm.fitness].append(chrm)
@@ -239,5 +239,5 @@ class Population:
         s = ""
         for k, v in self.pop_dict.items():
             for n in list(v):
-                s += str(n) + '\n'
+                s += str(n) + "\n"
         return s

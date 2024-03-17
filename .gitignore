@@ -1,7 +1,9 @@
-env/
+venv/
 .vscode
 .pytest_cache
 .mypy_cache
 .coverage
 *.pyc
 scratch.py
+output*
+input*

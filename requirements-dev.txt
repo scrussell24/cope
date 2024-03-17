@@ -1,6 +1,8 @@
-pytest==5.2.4
-pytest-cov==2.8.1
-pycodestyle==2.5.0
-mypy==0.740
+pytest
+pytest-cov
+pycodestyle
+mypy
+black
+isort
 
 -r requirements.txt
