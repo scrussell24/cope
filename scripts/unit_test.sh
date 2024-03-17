@@ -1,11 +1,10 @@
 #!/bin/bash
 python -m pycodestyle --max-line-length=110 cope/
-# looks like linter isn't updated for walrus operator
-# retVal=$?
-# if [ $retVal -ne 0 ]; then
-#     echo "Lint Error"
-#     exit $retVal
-# fi
+retVal=$?
+if [ $retVal -ne 0 ]; then
+    echo "Lint Error"
+    exit $retVal
+fi
 
 python -m mypy --ignore-missing-imports cope/
 retVal=$?
